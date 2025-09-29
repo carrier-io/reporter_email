@@ -27,10 +27,18 @@ class IntegrationModel(BaseModel):
         from tools import session_project
         project_id = kwargs.get('project_id', session_project.get())
         try:
-            with smtplib.SMTP_SSL(host=self.host, port=self.port) as server:
-                server.ehlo()
-                server.login(self.user, self.passwd.unsecret(project_id))
-            return True
+            if self.port == 465:
+                with smtplib.SMTP_SSL(host=self.host, port=self.port) as server:
+                    server.ehlo()
+                    server.login(self.user, self.passwd.unsecret(project_id))
+                return True
+            elif self.port == 587:
+                with smtplib.SMTP(host=self.host, port=self.port) as server:
+                    server.starttls()
+                    server.login(self.user, self.passwd.unsecret(project_id))
+                return True
+            else:
+                return False
         except Exception as e:
             log.exception(e)
             return False
